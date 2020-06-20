@@ -3,7 +3,7 @@ require("chromedriver");
 let swd = require("selenium-webdriver");
 let browser = new swd.Builder();
 let {email,password} = require("./credentials.json");
-const { resolve } = require("path");
+//const { resolve } = require("path");
 //tab 
 let tabnew = browser.forBrowser("chrome").build();
 let tabWillBeOpenedPromise = tabnew.get("https://www.hackerrank.com/auth/login");
@@ -14,60 +14,69 @@ tabWillBeOpenedPromise
             implicit: 10000
         });
         return findTimeOutP;
-    })
-     .then(function(){
-
+    }).then(function(){
         let inputBoxPromise = tabnew.findElement(swd.By.css("#input-1"));
         return inputBoxPromise;
-     }).then(function(inputBox){
-         let inputBoxWillbeFilledP = inputBox.sendKeys(email);
-         return inputBoxWillbeFilledP;
+    }).then(function(inputBox){
+        let inputBoxWillbeFilledP = inputBox.sendKeys(email);
+        return inputBoxWillbeFilledP;
 
-     }).then(function(){
-         let passwordBoxPromise = tabnew.findElement(swd.By.css("#input-2"));
-         return passwordBoxPromise;
-     }).then(function(passwordBox){
-         let passwordBoxP = passwordBox.sendKeys(password);
-         return passwordBoxP;
-     }).then(function(){
+    }).then(function(){
+        let passwordBoxPromise = tabnew.findElement(swd.By.css("#input-2"));
+        return passwordBoxPromise;
+    }).then(function(passwordBox){
+        let passwordBoxP = passwordBox.sendKeys(password);
+        return passwordBoxP;
+    }).then(function(){
          let loginBPromise = tabnew.findElement(swd.By.css("[data-analytics='LoginPassword']"));
          return loginBPromise;
-     }).then(function(loginB){
-         let loginBP = loginB.click();
-         return loginBP;
-     }).then(function(){
-        let InterBPromise = tabnew.findElement(swd.By.css("h3[title='Interview Preparation Kit']"));
+    }).then(function(loginB){
+        let loginBP = loginB.click();
+        return loginBP;
+    }).then(function(){
+        let InterBPromise = tabnew.findElement(swd.By.css("#base-card-1-link"));
         return InterBPromise;
     }).then(function(InterB){
         let InterBP = InterB.click();
         return InterBP;
     }).then(function(){
-        let WarmBPromise = tabnew.findElement(swd.By.css("#base-card-7"));
+        let WarmBPromise = tabnew.findElement(swd.By.css("a[data-attr1='warmup']"));
         return WarmBPromise;
     }).then(function(WarmB){
         let WarmBP = WarmB.click();
         return WarmBP;
     }).then(function(){
-        let QuesB = tabnew.getCurrentUrl();
-        return QuesB;
-    }).then(function(QuesB){
-        let QuesSolveB = questionSolve();
-        return QuesSolveB;
+        //let QuesB = tabnew.getCurrentUrl();
+        //return QuesB;
+        let allQtag = tabnew.findElements(swd.By.css("a.js-track-click.challenge-list-item"));// all ques tags
+        return allQtag;
+    }).then(function(alQues){
+        let allQuesLinkP = alQues.map(function(anchor){
+            return anchor.getAttribute("href");
+        })
+        let allLinkPromise = Promise.all(allQuesLinkP)
+        return allLinkPromise;
+    }).then(function(allQLink){
+        let f1Promise = questionSolve(allQLink[0]);
+        for(let i=1;i<allQLink.length;i++){
+            f1Promise = f1Promise.then(function(){
+                return questionSolve(allQLink[i]);
+            })    
+        }
+        let firstQuesWillBeSolvedP =f1Promise;
+        return firstQuesWillBeSolvedP;
+    }).then(function(){
+        console.log("All questions");
     }).catch(function(err){
          console.log(err);
      })
-
-function questionSolve(){
+function questionSolve(url){
         return new Promise(function(resolve,reject){
-             let QuesSolvBtn = tabnew.findElements(swd.By.css(".challenge-submit-btn"));
-             QuesSolvBtn.then(function(QuesBtnarr){               
-             let QuesClickBtnP = QuesBtnarr[0].click();
-             return QuesClickBtnP;
-
-         }).then(function(){
-             console.log("I am at editorial");
-             let editorialP = tabnew.findElement(swd.By.css("a[data-attr2='Editorial']"));
-             return editorialP;
+            //logic to solve a Question
+            let qPageWillBeOpenedP = tabnew.get(url);
+            qPageWillBeOpenedP.then(function(){
+                let editorialWillBeSelectedPromise=tabnew.findElement(swd.By.css("a[data-attr2='Editorial']"));
+                return editorialWillBeSelectedPromise;
          }).then(function(editorialP){
              let EditBtnP = editorialP.click();
              return EditBtnP;
@@ -89,7 +98,6 @@ function questionSolve(){
          })
     });
 }
-
 function handleBtn(){
     return new Promise(function(resolve,reject){
         let UnlockBttnP = tabnew.findElement(swd.By.css(".editorial-content-locked button.ui-btn.ui-btn-normal"));
